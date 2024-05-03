@@ -5,6 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {RegistryMerchants} from "../src/Registry.sol";
 import {RouterContract} from "../src/Router.sol";
 import {VaultCollateral} from "../src/Vault.sol";
+import {EscrowContract} from "../src/Escrow.sol";
 import {TestCoin} from "./MockERC20/ERC20.sol";
 
 contract OnRamp is Test {
@@ -12,16 +13,27 @@ contract OnRamp is Test {
     VaultCollateral vault;
     RegistryMerchants registry;
     RouterContract router;
+    EscrowContract escrow;
 
     address alice = address(0x01);
     address bob = address(0x02);
+    address admin = address(0x03);
+    address adjudicator1 = address(0x04);
+    address adjudicator2 = address(0x05);
+    address adjudicator3 = address(0x06);
+    address adjudicator4 = address(0x07);
+    address adjudicator5 = address(0x08);
+
+    event OfferPosted(address indexed user, uint256 indexed id, uint256 collateral);
+    event OnRampCreated(address indexed escrow, address indexed merchant, address indexed user, uint256 amount);
+    event Settled(address indexed merchant, address indexed user, bool on_ramp);
 
     function setUp() public {
         vm.startPrank(alice);
-        coin = new TestCoin("TestCoin","TC");
+        coin = new TestCoin("TestCoin", "TC");
         vault = new VaultCollateral(address(coin));
         registry = new RegistryMerchants(address(coin), address(vault));
-        router = new RouterContract(address(registry));
+        router = new RouterContract(address(registry), address(coin));
         vm.stopPrank();
     }
 
@@ -36,4 +48,33 @@ contract OnRamp is Test {
         router.registerMerchant(10e18);
         vm.stopPrank();
     }
+
+    function test_post_offer() public {
+        test_register_merchant();
+        vm.startPrank(bob);
+        vm.expectEmit(address(registry));
+        emit OfferPosted(bob, 1, 10e18);
+        router.post_offer(10e18);
+    }
+
+    function test_on_ramp() public {
+        test_post_offer();
+        vm.startPrank(alice);
+        vm.expectEmit(address(router));
+        emit OnRampCreated(address(0xfE2f43e66C38ab1d9d3026300698fb2E4a39a6b6), bob, alice, 10e18);
+        router.on_ramp(bob, adjudicator1, adjudicator2, adjudicator3, adjudicator4, adjudicator5, 1);
+    }
+
+    function test_settle() public {
+        test_on_ramp();
+        vm.startPrank(bob);
+        escrow = EscrowContract(0xfE2f43e66C38ab1d9d3026300698fb2E4a39a6b6);
+        coin.approve(address(escrow), 10e18);
+        vm.expectEmit(address(escrow));
+        emit Settled(bob, alice, true);
+        escrow.settle();
+        assertEq(coin.balanceOf(address(escrow)), 10e18);
+    }
+
+    
 }
