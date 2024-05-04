@@ -56,15 +56,19 @@ contract GovernanceDispute {
     }
 
     function vote(address escrow, bool side) external {
-         require(votingMap[escrow].escrow == escrow, "Dispute not found");
-         require(votingMap[escrow].timeVote >= block.timestamp, "Time has ran out");
-         require(msg.sender == adjudicator1 || msg.sender == adjudicator2 || msg.sender == adjudicator3 || msg.sender == adjudicator4 || msg.sender == adjudicator5 , "You are not adjudicator so u cant vote");
-        if(side == true){
+        require(votingMap[escrow].escrow == escrow, "Dispute not found");
+        require(votingMap[escrow].timeVote >= block.timestamp, "Time has ran out");
+        require(
+            msg.sender == adjudicator1 || msg.sender == adjudicator2 || msg.sender == adjudicator3
+                || msg.sender == adjudicator4 || msg.sender == adjudicator5,
+            "You are not adjudicator so u cant vote"
+        );
+        if (side == true) {
             votingMap[escrow].merchantVotes += 1;
-            voted[escrow][msg.sender] = true; 
-        }else{
+            voted[escrow][msg.sender] = true;
+        } else {
             votingMap[escrow].userVotes += 1;
-            voted[escrow][msg.sender] = true; 
+            voted[escrow][msg.sender] = true;
         }
         emit Voted(msg.sender, side);
     }

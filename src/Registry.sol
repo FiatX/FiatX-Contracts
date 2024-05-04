@@ -11,7 +11,7 @@ contract RegistryMerchants {
     IERC20 public token;
     address public vault;
 
-    OfferData [] public offers;
+    OfferData[] public offers;
 
     enum Status {
         ACTIVE,
@@ -44,7 +44,6 @@ contract RegistryMerchants {
     }
 
     function registerMerchant(address user) external {
-
         console.logAddress(msg.sender);
 
         //it will check if the user existed on the merchant registry

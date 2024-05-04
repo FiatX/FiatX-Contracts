@@ -53,7 +53,7 @@ contract RouterContract {
         address adjudicator4,
         address adjudicator5,
         uint256 id
-    ) external {
+    ) external returns (address escrow){
         require(registry.checkMerchant(merchant) == true, "Check failed");
         uint256 amount = registry.getMerchantPost(merchant, id);
         require(registry.getOfferPostStatus(id) == true, "The id is not found or its an off ramp");
@@ -89,6 +89,7 @@ contract RouterContract {
         );
         escrowMap[address(escrow)] = escrowData;
         emit OnRampCreated(address(escrow), merchant, msg.sender, amount);
+        return address(escrow);
     }
 
     //deploy an escrow contract for user
@@ -100,7 +101,7 @@ contract RouterContract {
         address adjudicator4,
         address adjudicator5,
         uint256 id
-    ) external {
+    ) external returns (address escrow){
         require(registry.checkMerchant(merchant) == true, "Check failed");
         uint256 amount = registry.getMerchantPost(merchant, id);
         require(registry.getOfferPostStatus(id) == false, "The id is not found or its an off ramp");
@@ -135,6 +136,7 @@ contract RouterContract {
         );
         escrowMap[address(escrow)] = escrowData;
         emit OffRampCreated(address(escrow), merchant, msg.sender, amount);
+        return address(escrow);
     }
 
     function change_status_of_transaction(address escrow, address user) external {

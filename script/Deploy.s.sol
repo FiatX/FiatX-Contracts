@@ -30,7 +30,8 @@ contract DeploymentScript is Script {
         coin = new StableCoin("USDT", "USDT");
         registry = new RegistryMerchants(address(coin));
         router = new RouterContract(address(registry), address(coin));
-        governance = new GovernanceDispute(adjudicator1, adjudicator2, adjudicator3, adjudicator4, adjudicator5, address(router));
+        governance =
+            new GovernanceDispute(adjudicator1, adjudicator2, adjudicator3, adjudicator4, adjudicator5, address(router));
         router.set_governance(address(governance));
         vm.stopBroadcast();
     }
