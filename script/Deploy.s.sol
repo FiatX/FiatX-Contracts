@@ -7,10 +7,10 @@ import {RouterContract} from "../src/Router.sol";
 import {VaultCollateral} from "../src/Vault.sol";
 import {EscrowContract} from "../src/Escrow.sol";
 import {GovernanceDispute} from "../src/Governance.sol";
-import {TestCoin} from "../test/MockERC20/ERC20.sol";
+import {StableCoin} from "../src/USDT.sol";
 
 contract DeploymentScript is Script {
-    TestCoin coin;
+    StableCoin coin;
     VaultCollateral vault;
     RegistryMerchants registry;
     RouterContract router;
@@ -27,9 +27,8 @@ contract DeploymentScript is Script {
         address adjudicator3 = address(0x06);
         address adjudicator4 = address(0x07);
         address adjudicator5 = address(0x08);
-        coin = new TestCoin("TestCoin", "TC");
-        vault = new VaultCollateral(address(coin));
-        registry = new RegistryMerchants(address(coin), address(vault));
+        coin = new StableCoin("USDT", "USDT");
+        registry = new RegistryMerchants(address(coin));
         router = new RouterContract(address(registry), address(coin));
         governance = new GovernanceDispute(adjudicator1, adjudicator2, adjudicator3, adjudicator4, adjudicator5, address(router));
         router.set_governance(address(governance));

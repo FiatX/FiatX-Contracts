@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 interface IRegistryMerchants {
-    function registerMerchant(address user, uint256 collateral) external;
+    function registerMerchant(address user) external;
     function postOffer(address user, uint256 amount, bool on_ramp, string memory symbol, uint256 fiatAmount) external;
     function getStatus(address user) external view returns (bool);
     function checkMerchant(address user) external view returns (bool);

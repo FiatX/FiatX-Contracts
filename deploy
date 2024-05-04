@@ -1,6 +1,10 @@
 #/bin/sh
 
 source .env
-
+echo "Deploying contract on $SEPOLIA_TESTNET_RPC_URL..."
 # forge script script/Deployment.s.sol:DeploymentScript --rpc-url $BLAST_TESTNET_RPC_URL --broadcast --watch
 forge script script/Deploy.s.sol:DeploymentScript --rpc-url $SEPOLIA_TESTNET_RPC_URL --broadcast 
+echo "Deploying contract on $BASE_SEPOLIA_RPC_URL..."
+forge script script/Deploy.s.sol:DeploymentScript --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast 
+echo "Deploying contract on $POLYGON_KARDONA_RPC_URL..."
+forge script script/Deploy.s.sol:DeploymentScript --rpc-url $POLYGON_KARDONA_RPC_URL --broadcast 

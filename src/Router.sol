@@ -34,10 +34,10 @@ contract RouterContract {
         token = _token;
     }
 
-    function registerMerchant(uint256 collateral) external {
+    function registerMerchant() external {
         //first deposit the collateral to the vault
         //second register it on the registry contract
-        registry.registerMerchant(msg.sender, collateral);
+        registry.registerMerchant(msg.sender);
     }
 
     function postOffer(uint256 amount, bool on_ramp, string memory symbol, uint256 fiatAmount) external {

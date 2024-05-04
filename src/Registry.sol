@@ -11,6 +11,8 @@ contract RegistryMerchants {
     IERC20 public token;
     address public vault;
 
+    OfferData [] public offers;
+
     enum Status {
         ACTIVE,
         NONACTIVE
@@ -18,8 +20,6 @@ contract RegistryMerchants {
 
     struct MerchantData {
         address user;
-        uint256 collateral;
-        uint256 remainingCollateral;
         Status status;
     }
 
@@ -36,54 +36,44 @@ contract RegistryMerchants {
     mapping(uint256 => OfferData) offerData;
     uint256 public offerId = 0;
 
-    event Registered(address indexed user, uint256 collateral);
+    event Registered(address indexed user);
     event OfferPosted(address indexed user, uint256 indexed id, uint256 collateral);
 
-    constructor(address _token, address _vault) {
+    constructor(address _token) {
         token = IERC20(_token);
-        vault = _vault;
     }
 
-    function registerMerchant(address user, uint256 collateral) external {
-        //it needs to be 5% of the collateral
-        uint256 newCollateral = (collateral.mul(5)).div(100) + collateral;
+    function registerMerchant(address user) external {
 
         console.logAddress(msg.sender);
 
         //it will check if the user existed on the merchant registry
         require(merchants[user].user != user, "The merchant is registered");
-        require(token.balanceOf(user) >= newCollateral, "Not enough USDT");
-
-        //Transfer the funds to the vault
-        token.transferFrom(user, vault, newCollateral);
 
         //now register the user
-        MerchantData memory merchant = MerchantData(user, newCollateral, collateral, Status.ACTIVE);
+        MerchantData memory merchant = MerchantData(user, Status.ACTIVE);
 
         //set the new registered merchant
         merchants[user] = merchant;
 
         //emit the event
-        emit Registered(user, collateral);
+        emit Registered(user);
     }
 
     function postOffer(address user, uint256 amount, bool on_ramp, string memory symbol, uint256 fiatAmount) external {
         if (on_ramp == true) {
             require(merchants[user].user == user, "Not the user itself");
-            // uint256 actualCollateral = (merchants[user].collateral.mul(5)).div(100) - amount;
-            // require(merchants[user].collateral <= actualCollateral, "This is above the current collateral");
-            require(merchants[user].remainingCollateral - amount <= 0, "Not enough collateral");
             offerId += 1;
             OfferData memory offer = OfferData(offerId, user, amount, symbol, fiatAmount, on_ramp);
             offerData[offerId] = offer;
-            //reduce the remaining collateral
-            merchants[user].remainingCollateral -= amount;
+            offers.push(offer);
             emit OfferPosted(user, offerId, amount);
         } else {
             require(merchants[user].user == user, "Not the user itself");
             offerId += 1;
             OfferData memory offer = OfferData(offerId, user, amount, symbol, fiatAmount, on_ramp);
             offerData[offerId] = offer;
+            offers.push(offer);
             emit OfferPosted(user, offerId, amount);
         }
     }
@@ -121,5 +111,9 @@ contract RegistryMerchants {
 
     function getMerchantData(address user) public view returns (MerchantData memory) {
         return merchants[user];
+    }
+
+    function getLengthOfOffer() public view returns (uint256) {
+        return offers.length;
     }
 }
