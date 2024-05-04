@@ -6,6 +6,7 @@ import {RegistryMerchants} from "../src/Registry.sol";
 import {RouterContract} from "../src/Router.sol";
 import {VaultCollateral} from "../src/Vault.sol";
 import {EscrowContract} from "../src/Escrow.sol";
+import {GovernanceDispute} from "../src/Governance.sol";
 import {TestCoin} from "./MockERC20/ERC20.sol";
 
 contract OnRamp is Test {
@@ -14,6 +15,7 @@ contract OnRamp is Test {
     RegistryMerchants registry;
     RouterContract router;
     EscrowContract escrow;
+    GovernanceDispute governance;
 
     address alice = address(0x01);
     address bob = address(0x02);
@@ -27,6 +29,7 @@ contract OnRamp is Test {
     event OfferPosted(address indexed user, uint256 indexed id, uint256 collateral);
     event OnRampCreated(address indexed escrow, address indexed merchant, address indexed user, uint256 amount);
     event Settled(address indexed merchant, address indexed user, bool on_ramp);
+    event FundsUnlocked(address indexed reciever, uint256 amount);
 
     function setUp() public {
         vm.startPrank(alice);
@@ -34,6 +37,9 @@ contract OnRamp is Test {
         vault = new VaultCollateral(address(coin));
         registry = new RegistryMerchants(address(coin), address(vault));
         router = new RouterContract(address(registry), address(coin));
+        governance =
+            new GovernanceDispute(adjudicator1, adjudicator2, adjudicator3, adjudicator4, adjudicator5, address(router));
+        router.set_governance(address(governance));
         vm.stopPrank();
     }
 
@@ -54,7 +60,7 @@ contract OnRamp is Test {
         vm.startPrank(bob);
         vm.expectEmit(address(registry));
         emit OfferPosted(bob, 1, 10e18);
-        router.post_offer(10e18);
+        router.postOffer(10e18, true, "RP", 16000);
     }
 
     function test_on_ramp() public {
@@ -76,5 +82,14 @@ contract OnRamp is Test {
         assertEq(coin.balanceOf(address(escrow)), 10e18);
     }
 
-    
+    function test_unlock_funds() public {
+        test_settle();
+        vm.startPrank(bob);
+        escrow = EscrowContract(0xfE2f43e66C38ab1d9d3026300698fb2E4a39a6b6);
+        uint256 beforeBalance = coin.balanceOf(alice);
+        vm.expectEmit(address(escrow));
+        emit FundsUnlocked(alice, 10e18);
+        escrow.unlock_funds();
+        assertEq(coin.balanceOf(alice) - beforeBalance, 10e18);
+    }
 }

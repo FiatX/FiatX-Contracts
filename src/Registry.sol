@@ -27,6 +27,9 @@ contract RegistryMerchants {
         uint256 id;
         address user;
         uint256 amount;
+        string symbol;
+        uint256 fiatAmount;
+        bool on_ramp;
     }
 
     mapping(address => MerchantData) merchants;
@@ -64,17 +67,25 @@ contract RegistryMerchants {
         emit Registered(user, collateral);
     }
 
-    function postOffer(address user, uint256 amount) external {
-        require(merchants[user].user == user, "Not the user itself");
-        // uint256 actualCollateral = (merchants[user].collateral.mul(5)).div(100) - amount;
-        // require(merchants[user].collateral <= actualCollateral, "This is above the current collateral");
-        require(merchants[user].remainingCollateral - amount <= 0, "Not enough collateral");
-        offerId += 1;
-        OfferData memory offer = OfferData(offerId, user, amount);
-        offerData[offerId] = offer;
-        //reduce the remaining collateral
-        merchants[user].remainingCollateral -= amount;
-        emit OfferPosted(user, offerId, amount);
+    function postOffer(address user, uint256 amount, bool on_ramp, string memory symbol, uint256 fiatAmount) external {
+        if (on_ramp == true) {
+            require(merchants[user].user == user, "Not the user itself");
+            // uint256 actualCollateral = (merchants[user].collateral.mul(5)).div(100) - amount;
+            // require(merchants[user].collateral <= actualCollateral, "This is above the current collateral");
+            require(merchants[user].remainingCollateral - amount <= 0, "Not enough collateral");
+            offerId += 1;
+            OfferData memory offer = OfferData(offerId, user, amount, symbol, fiatAmount, on_ramp);
+            offerData[offerId] = offer;
+            //reduce the remaining collateral
+            merchants[user].remainingCollateral -= amount;
+            emit OfferPosted(user, offerId, amount);
+        } else {
+            require(merchants[user].user == user, "Not the user itself");
+            offerId += 1;
+            OfferData memory offer = OfferData(offerId, user, amount, symbol, fiatAmount, on_ramp);
+            offerData[offerId] = offer;
+            emit OfferPosted(user, offerId, amount);
+        }
     }
 
     function setStatus(address user, Status status) internal {
@@ -102,6 +113,10 @@ contract RegistryMerchants {
     function getMerchantPost(address user, uint256 id) public view returns (uint256) {
         require(offerData[id].user == user, "No such user exist");
         return offerData[id].amount;
+    }
+
+    function getOfferPostStatus(uint256 id) public view returns (bool) {
+        return offerData[id].on_ramp;
     }
 
     function getMerchantData(address user) public view returns (MerchantData memory) {
